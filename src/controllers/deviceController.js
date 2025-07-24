@@ -3,11 +3,7 @@ import Device from "../models/Device.js";
 // Create a new device
 export const createDevice = async (req, res) => {
   try {
-    let { name, type } = req.body;
-
-    if (!type) {
-      type = "fan"; // default type
-    }
+    let { name } = req.body;
 
     // If no name provided, generate the next available D<number>
     if (!name) {
@@ -21,7 +17,7 @@ export const createDevice = async (req, res) => {
 
       name = `D${nextNumber}`;
     }
-    const device = new Device({ name, type, switch: false, deviceStatus: false });
+    const device = new Device({ name, switch: false, deviceStatus: false });
 
     await device.save();
 
@@ -118,15 +114,15 @@ export const deleteDevice = async (req, res) => {
 export const editDevice = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, type } = req.body;
+    const { name } = req.body;
 
-    if (!name && !type) {
-      return res.status(400).json({ error: "Name or type must be provided" });
+    if (!name) {
+      return res.status(400).json({ error: "Name must be provided" });
     }
 
     const updated = await Device.findByIdAndUpdate(
       id,
-      { ...(name && { name }), ...(type && { type }) },
+      { ...(name && { name }) },
       { new: true }
     );
 

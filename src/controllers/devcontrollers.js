@@ -18,11 +18,6 @@ export const getDeviceSwitchStatus = async (req, res) => {
 };
 
 // 2. Get switch status AND update deviceStatus (activate/deactivate device)
-// Store timers globally so we can clear/reset them for each device
-const deviceTimers = {};
-
-// 2. Get switch status AND update deviceStatus (activate/deactivate device)
-
 // Add timer store outside controller
 const offlineTimers = {};
 
@@ -80,7 +75,6 @@ export const getDeviceStatusAndToggle = async (req, res) => {
 };
 
 
-
 // 3. Update switch status (1/0) but only if device is online
 export const setSwitchIfDeviceOnline = async (req, res) => {
   try {
@@ -96,20 +90,20 @@ export const setSwitchIfDeviceOnline = async (req, res) => {
 
     if (!device) return res.status(404).json({ error: "Device not found" });
 
-    // Check if device is online before toggling
-    if (!device.deviceStatus) {
-      return res.status(400).json({
-        error: `Device '${name}' is offline. Cannot change switch.`,
-        switch: device.switch ? 1 : 0,
-      });
-    }
+    // // Check if device is online before toggling
+    // if (!device.deviceStatus) {
+    //   return res.status(400).json({
+    //     error: `Device '${name}' is offline. Cannot change switch.`,
+    //     switch: device.switch ? 1 : 0,
+    //   });
+    // }
 
     // Update switch
     device.switch = status === "1";
     await device.save();
 
     return res.json({
-      message: `Switch for '${name}' set to ${device.switch ? 1 : 0}`,
+      // message: `Switch for '${name}' set to ${device.switch ? 1 : 0}`,
       switch: device.switch ? 1 : 0,
     });
   } catch (err) {
