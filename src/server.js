@@ -19,5 +19,9 @@ connectDB();
 // Routes
 app.use("/api/devices", deviceRoutes);
 
+app.use('/',(req,res)=>{
+    res.send('Automation backend is running')
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
