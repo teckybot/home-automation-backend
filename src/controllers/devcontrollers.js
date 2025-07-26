@@ -170,7 +170,6 @@ export const updateDeviceMonitor = async (req, res) => {
       mode: device.mode,
       deviceStatus: device.deviceStatus ? 1 : 0,
       sensorValue: device.mode === "monitoring" ? device.sensorValue : null,
-      switch: device.switch ? 1 : 0,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
