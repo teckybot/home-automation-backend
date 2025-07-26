@@ -32,6 +32,13 @@ export const getDeviceStatusAndToggle = async (req, res) => {
 
     if (!device) return res.status(404).json({ error: "Device not found" });
 
+    // Reject if device is in "monitoring" mode (no switch control)
+    if (device.mode === "monitoring") {
+      return res.status(400).json({
+        error: `Device '${device.name}' is a 'monitoring' device and cannot be toggled.`,
+      });
+    }
+
     // Update deviceStatus if passed
     if (deviceStatus !== undefined) {
       const newStatus = deviceStatus === "1";
@@ -48,7 +55,7 @@ export const getDeviceStatusAndToggle = async (req, res) => {
           const d = await Device.findOne({ name: new RegExp(`^${name}$`, "i") });
           if (d && d.deviceStatus) {
             d.deviceStatus = false;
-            d.lastOnline = new Date(); // Update last online
+            d.lastOnline = new Date();
             await d.save();
             console.log(`Device '${name}' auto-set offline at ${d.lastOnline}`);
           }
@@ -73,6 +80,7 @@ export const getDeviceStatusAndToggle = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 // 3. Update switch status (1/0) but only if device is online
@@ -111,3 +119,60 @@ export const setSwitchIfDeviceOnline = async (req, res) => {
   }
 };
 
+
+//4. For monitioring devices
+const monitorTimers = {}; // For extending the 60s timer
+
+export const updateDeviceMonitor = async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { deviceStatus, sensorValue } = req.query;
+
+    const device = await Device.findOne({
+      name: new RegExp(`^${name}$`, "i"),
+    });
+
+    if (!device) {
+      return res.status(404).json({ error: "Device not found" });
+    }
+
+    // Reject sensorValue updates if device is not monitoring mode
+    if (sensorValue !== undefined && device.mode !== "monitoring") {
+      return res.status(400).json({
+        error: `Device '${device.name}' is a '${device.mode}' device and cannot store sensor values.`,
+      });
+    }
+
+    // Update deviceStatus if provided
+    if (deviceStatus !== undefined) {
+      device.deviceStatus = deviceStatus === "1";
+
+      if (device.deviceStatus) {
+        // Reset offline timer
+        if (monitorTimers[name]) clearTimeout(monitorTimers[name]);
+        monitorTimers[name] = setTimeout(async () => {
+          device.deviceStatus = false;
+          device.lastOnline = new Date();
+          await device.save();
+        }, 60000);
+      }
+    }
+
+    // Update sensorValue only for monitoring devices
+    if (sensorValue !== undefined && device.mode === "monitoring") {
+      device.sensorValue = parseFloat(sensorValue);
+    }
+
+    await device.save();
+
+    res.json({
+      name: device.name,
+      mode: device.mode,
+      deviceStatus: device.deviceStatus ? 1 : 0,
+      sensorValue: device.mode === "monitoring" ? device.sensorValue : null,
+      switch: device.switch ? 1 : 0,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

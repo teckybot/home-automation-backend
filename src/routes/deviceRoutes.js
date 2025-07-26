@@ -11,7 +11,8 @@ import {
 import{
   getDeviceSwitchStatus,
   getDeviceStatusAndToggle,
-  setSwitchIfDeviceOnline
+  setSwitchIfDeviceOnline,
+  updateDeviceMonitor 
 } from "../controllers/devcontrollers.js";
 
 const router = express.Router();
@@ -29,5 +30,6 @@ router.put("/:id", editDevice);
 router.get("/:name/status", getDeviceSwitchStatus);           
 router.get("/:name/status/toggle", getDeviceStatusAndToggle); 
 router.get("/setSwitch", setSwitchIfDeviceOnline);                     
+router.get("/:name/monitor", updateDeviceMonitor);
 
 export default router;

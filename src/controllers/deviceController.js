@@ -3,9 +3,14 @@ import Device from "../models/Device.js";
 // Create a new device
 export const createDevice = async (req, res) => {
   try {
-    let { name } = req.body;
+    let { name, mode } = req.body;
 
-    // If no name provided, generate the next available D<number>
+    // Validate mode (default to "controller")
+    if (!mode || !["controller", "monitoring"].includes(mode)) {
+      mode = "controller";
+    }
+
+    // Auto-generate name if not provided (D<number>)
     if (!name) {
       const devices = await Device.find({ name: /^D\d+$/ }).sort({ name: 1 });
       let nextNumber = 1;
@@ -17,7 +22,14 @@ export const createDevice = async (req, res) => {
 
       name = `D${nextNumber}`;
     }
-    const device = new Device({ name, switch: false, deviceStatus: false });
+
+    const device = new Device({
+      name,
+      mode,
+      switch: mode === "controller" ? false : undefined,
+      sensorValue: mode === "monitoring" ? null : undefined,  // <-- null until first reading
+      deviceStatus: false,
+    });
 
     await device.save();
 
@@ -26,6 +38,8 @@ export const createDevice = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
 
 // Get all devices
 export const getDevices = async (req, res) => {
